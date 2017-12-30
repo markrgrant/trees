@@ -1,5 +1,5 @@
 -- adjacency list representation
-CREATE TABLE container_al (
+CREATE TABLE IF NOT EXISTS container_al (
     id SERIAL PRIMARY KEY
     , name TEXT NOT NULL UNIQUE
     , position TEXT NOT NULL
