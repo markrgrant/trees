@@ -1,4 +1,4 @@
--- a helper function for finding the root node in a nested set hierarchy
+-- a helper function for finding the root container
 CREATE OR REPLACE FUNCTION root_container_ns()
     RETURNS TABLE(id int, name text, lft int, rgt int) AS $$
     BEGIN
@@ -10,17 +10,34 @@ CREATE OR REPLACE FUNCTION root_container_ns()
 $$ LANGUAGE plpgsql;
 
 
--- a helper function for finding the leaf nodes in a nested set hierarchy
+-- a helper function for finding the leaf containers
 CREATE OR REPLACE FUNCTION leaf_containers_ns()
     RETURNS TABLE(id int, name text, lft int, rgt int) AS $$
     BEGIN
         RETURN QUERY
         SELECT c.id, c.name, c.lft, c.rgt
         FROM container_ns c
-        WHERE c.rgt - c.lft = 1;
+        WHERE c.lft = c.rgt - 1;
     END
 $$ LANGUAGE plpgsql;
 
+
+-- a helper function for finding descendant containers
+CREATE OR REPLACE FUNCTION descendant_containers_ns(_id int)
+    RETURNS TABLE(id int, name text, lft int, rgt int) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT c.id, c.name, c.lft, c.rgt
+        FROM container_ns c, container_ns p
+        WHERE c.lft > p.lft
+        AND c.rgt < p.rgt
+        AND p.id = _id;
+    END
+$$ LANGUAGE plpgsql;
+
+
+-- a helper function for finding the height of a subtree
+-- TODO
 
 
 -- a helper function for populating nested set containers
@@ -41,8 +58,8 @@ CREATE OR REPLACE FUNCTION create_container_ns(
                 cur_rgt INTEGER;
                 parent_id_val INTEGER;
             BEGIN
+                -- create parent container
                 INSERT INTO
-                    -- create this container
                     container_ns(name, lft, rgt)
                 VALUES
                     (gen_random_uuid()::text, lft, rgt)

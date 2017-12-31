@@ -1,3 +1,52 @@
+-- a helper function for finding the root container
+CREATE OR REPLACE FUNCTION root_container_al()
+    RETURNS TABLE(id int, name text, "position" text, parent_id int) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT c.id, c.name, c.position, c.parent_id
+        FROM container_al c
+        WHERE c.parent_id = 0 and c.parent_id <> c.id;
+    END
+$$ LANGUAGE plpgsql;
+
+
+-- a helper function for finding the leaf containers
+CREATE OR REPLACE FUNCTION leaf_containers_al()
+    RETURNS TABLE(id int, name text, "position" text, parent_id int) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT c.id, c.name, c.position, c.parent_id
+        FROM container_al c
+        WHERE not exists (
+            select 1 from container_al cc
+            where cc.parent_id = c.id);
+    END
+$$ LANGUAGE plpgsql;
+
+
+-- a helper function for finding descendant containers
+CREATE OR REPLACE FUNCTION descendant_containers_al(_id int)
+    RETURNS TABLE(id int, name text, "position" text, parent_id int) AS $$
+    BEGIN
+        RETURN QUERY
+        WITH RECURSIVE descendant_containers(id, name, position, parent_id) AS (
+              SELECT p.id, p.name, p.position, p.parent_id
+              FROM container_al p where p.parent_id = _id
+            UNION ALL
+              SELECT c.id, c.name, c.position, c.parent_id
+              FROM descendant_containers d, container_al c
+              WHERE c.parent_id = d.id
+        )
+        SELECT *
+        FROM descendant_containers;
+    END
+$$ LANGUAGE plpgsql;
+
+
+-- a helper function for finding the height of a subtree
+-- TODO
+
+-- a helper method for populating adjacency list containers
 CREATE OR REPLACE FUNCTION create_container_al(
     parent_id INTEGER,
     pos TEXT,
