@@ -1,7 +1,8 @@
 The purpose of this project is to compare the performance of a nested
 set model with an adjacency list model of hierarchies for modeling containers.
 
-Results:
+Results for an 4-ary tree (four children per node) with a depth of 10 (where
+the root has a depth of 1) for a total of 349525 nodes
 
 |Query|Nested Set|Adjacency List|
 |-----|----------|--------------|
