@@ -43,8 +43,25 @@ CREATE OR REPLACE FUNCTION descendant_containers_al(_id int)
 $$ LANGUAGE plpgsql;
 
 
--- a helper function for finding the height of a subtree
--- TODO
+-- a helper function for finding the height (depth) of the tree
+CREATE OR REPLACE FUNCTION container_height_al()
+    RETURNS TABLE(height int) AS $$
+    BEGIN
+        RETURN QUERY
+        WITH RECURSIVE container_height AS (
+              SELECT p.parent_id as id, 1 as height
+              FROM container_al p
+              wHERE p.parent_id = 0 and p.id != 0
+            UNION
+              SELECT c.parent_id, (d.height + 1) as height
+              FROM container_height d, container_al c
+              WHERE c.parent_id = d.id
+        )
+        SELECT MAX(c.height)
+        FROM container_height c;
+    END
+$$ LANGUAGE plpgsql;
+
 
 -- a helper method for populating adjacency list containers
 CREATE OR REPLACE FUNCTION create_container_al(

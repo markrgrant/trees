@@ -36,8 +36,17 @@ CREATE OR REPLACE FUNCTION descendant_containers_ns(_id int)
 $$ LANGUAGE plpgsql;
 
 
--- a helper function for finding the height of a subtree
--- TODO
+-- a helper function for finding the height (depth) of the tree
+CREATE OR REPLACE FUNCTION container_height_ns()
+    RETURNS TABLE(height int) AS $$
+    BEGIN
+        SELECT MAX(level) AS height
+        FROM (SELECT c2.name, (COUNT(c1.name) - 1)
+            FROM container_ns AS c1, container_ns as c2
+            WHERE c2.lft BETWEEN c1.lft AND c1.rgt
+            GROUP BY c2.name) AS L1(member, level);
+    END
+$$ LANGUAGE plpgsql;
 
 
 -- a helper function for populating nested set containers
